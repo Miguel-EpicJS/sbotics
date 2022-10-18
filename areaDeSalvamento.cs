@@ -39,9 +39,9 @@ async Task LevantarPa2(double angle = 31, double mult = 1) {
 
         
         Bot.GetComponent<Servomotor>( "fmotor" ).Locked = false;
-        Bot.GetComponent<Servomotor>("fmotor").Apply( 50*mult, 50*mult );
+        Bot.GetComponent<Servomotor>("fmotor").Apply( 45*mult, 45*mult );
         Frente(motores, 3);
-        await Time.Delay(130);
+        await Time.Delay(120);
         Travar(motores, true);
     }
     Travar(motores, false);
@@ -134,7 +134,7 @@ async Task Main()
     while(true) {
 
         await Time.Delay(50);
-        Frente(motores, 2);
+        Frente(motores, 1);
         if( ( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).Brightness < 90 && ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).Brightness < 90) {
             break;
         }
@@ -150,28 +150,28 @@ async Task Main()
         if( ( Bot.GetComponent<ColorSensor>( "fs" ).Analog ).ToString() == "Preto") {
             anguloT = Math.Round(Bot.Compass);
             IO.Print(anguloT.ToString());
-            await Time.Delay(500);
+            await Time.Delay(2000);
             break;
         }
         else if(( Bot.GetComponent<UltrasonicSensor>( "ffultra" ).Analog ) < 6 && ( Bot.GetComponent<UltrasonicSensor>( "ffultra" ).Analog ) > 0) {
             
-            await Direita90(1.2, Bot.Compass);
+            await Direita90(0.7, Bot.Compass);
         }
         
     }
 
     while(true) {
         await Time.Delay(50);
-        Tras(motores, 2);
+        Tras(motores, 1);
         if((( Bot.GetComponent<UltrasonicSensor>( "bultra" ).Analog ) < 1 && ( Bot.GetComponent<UltrasonicSensor>( "bultra" ).Analog ) > 0)) {
             Travar(motores);
         }
         if(( Bot.GetComponent<UltrasonicSensor>( "rultra" ).Analog ) < 18 && ( Bot.GetComponent<UltrasonicSensor>( "rultra" ).Analog ) > 0) {
 
-            Tras(motores, 2);
+            Tras(motores, 1);
 
             await Time.Delay(500);
-            await Direita90(1.2, Bot.Compass);
+            await Direita90(0.7, Bot.Compass);
 
             while(( Bot.GetComponent<UltrasonicSensor>( "ffultra" ).Analog ) > 5  && ( Bot.GetComponent<UltrasonicSensor>( "ffultra" ).Analog ) != -1) {
                 await Time.Delay(50);
@@ -183,9 +183,9 @@ async Task Main()
 
             while(!(( Bot.GetComponent<UltrasonicSensor>( "bultra" ).Analog ) < 1 && ( Bot.GetComponent<UltrasonicSensor>( "bultra" ).Analog ) > 0)) {
                 await Time.Delay(50);
-                Tras(motores, 2);
+                Tras(motores, 1);
             }
-            await Esquerda90(1.2, Bot.Compass + 10);
+            await Esquerda90(0.7, Bot.Compass + 10);
           
             Travar(motores);
             Travar(motores, false);
@@ -193,8 +193,9 @@ async Task Main()
             await AbaixarPa();
             while( ( Bot.GetComponent<ColorSensor>( "fs" ).Analog ).ToString() != "Preto") {
                 await Time.Delay(50);
-                Frente(motores, 2);
+                Frente(motores, 1);
             }
+            await Time.Delay(2000);
         }
 
     }
