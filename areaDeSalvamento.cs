@@ -13,19 +13,35 @@ async Task Parar(string[] nomes) {
     }
 }
 
-async Task LevantarPa() {
+async Task FuncPa(double mult, int dir) {
+
+   Bot.GetComponent<Servomotor>( "fmotor" ).Locked = false;
+   Bot.GetComponent<Servomotor>("fmotor").Apply( 50*mult*dir, 50*mult*dir );
+   await Time.Delay(50*mult);
+   Bot.GetComponent<Servomotor>( "fmotor" ).Locked = true;
+}
+
+async Task DirecaoPa(double mult = 1, int dir = 1) {
     Bot.GetComponent<Servomotor>( "fmotor" ).Locked = false;
-    while(( Bot.GetComponent<Servomotor>( "fmotor" ).Angle ) < 40) {
-        IO.Print("Pa1");
-        await Time.Delay(50);
-        Bot.GetComponent<Servomotor>( "fmotor" ).Locked = false;
-        Bot.GetComponent<Servomotor>("fmotor").Apply( 150, 150 );
-        await Time.Delay(150);
-        Bot.GetComponent<Servomotor>( "fmotor" ).Locked = true;
+
+    int angle = (dir == 1 ? 40 : 0);
+    if(angle == 40) {
+        while(( Bot.GetComponent<Servomotor>( "fmotor" ).Angle ) < angle) {
+            IO.Print("Pa1");
+            await Time.Delay(50);
+            await FuncPa(mult, dir);
+        }
+    } else {
+        while(( Bot.GetComponent<Servomotor>( "fmotor" ).Angle ) > angle) {
+            IO.Print("Pa1");
+            await Time.Delay(50);
+            await FuncPa(mult, dir);
+        }
     }
     Bot.GetComponent<Servomotor>( "fmotor" ).Locked = true;
     IO.Print("Fim1");
 }
+
 
 async Task LevantarPa2(double angle = 31, double mult = 1) {
     Travar(motores, false);
@@ -50,16 +66,6 @@ async Task LevantarPa2(double angle = 31, double mult = 1) {
 }
 
 
-async Task AbaixarPa(double mult = 1) {
-    while(( Bot.GetComponent<Servomotor>( "fmotor" ).Angle ) >= 0) {
-        await Time.Delay(50);
-        Bot.GetComponent<Servomotor>( "fmotor" ).Locked = false;
-        Bot.GetComponent<Servomotor>("fmotor").Apply( -100*mult, -100*mult );
-        await Time.Delay(50);
-        Bot.GetComponent<Servomotor>( "fmotor" ).Locked = true;
-    }
-}
-
 async Task Frente(string[] nomes, double mult = 1) {
     foreach(string nome in nomes) {
         Bot.GetComponent<Servomotor>(nome).Apply( 150*mult, 150*mult );
@@ -72,109 +78,114 @@ async Task Tras(string[] nomes, double mult) {
     }
 }
 
-async Task Direita(double mult) {
+void Direcao(string direction = "d", double mult = 1) {
+    if(direction == "d") {
+        Bot.GetComponent<Servomotor>("lmotor").Apply( 170*mult, 170*mult );
+        Bot.GetComponent<Servomotor>("rmotor").Apply( -150*mult, -150*mult );
+        Bot.GetComponent<Servomotor>("blmotor").Apply( 170*mult, 170*mult );
+        Bot.GetComponent<Servomotor>("brmotor").Apply( -150*mult, -150*mult );
+    } else {
+        Bot.GetComponent<Servomotor>("lmotor").Apply( -150*mult, -150*mult );
+        Bot.GetComponent<Servomotor>("rmotor").Apply( 170*mult, 170*mult  );
+        Bot.GetComponent<Servomotor>("blmotor").Apply( -150*mult, -150*mult );
+        Bot.GetComponent<Servomotor>("brmotor").Apply( 170*mult, 170*mult  );
+    }
+}
 
-    Bot.GetComponent<Servomotor>("lmotor").Apply( 170*mult, 170*mult );
-    Bot.GetComponent<Servomotor>("rmotor").Apply( -150*mult, -150*mult );
-    Bot.GetComponent<Servomotor>("blmotor").Apply( 170*mult, 170*mult );
-    Bot.GetComponent<Servomotor>("brmotor").Apply( -150*mult, -150*mult );
+async Task Direita(double mult, int type = 0) {
+
+    Direcao("d", mult);
+
+    if(type == 1) { // Direita 90
+        double actCompass = Bot.Compass;
+        while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass+90), 360)) {
+            await Time.Delay(50);
+            IO.Print( Math.Round(Bot.Compass).ToString()+ "  " + Utils.Modulo(Math.Round(actCompass+90), 360).ToString());
+            Direita(mult);
+        }
+    }
 
 }
 
-async Task Direita90(double mult = 1, double actCompass = 270) {
-    while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass+90), 360)) {
-        await Time.Delay(50);
-        IO.Print( Math.Round(Bot.Compass).ToString()+ "  " + Utils.Modulo(Math.Round(actCompass+90), 360).ToString());
-        Direita(mult);
-   }
-}
+async Task Esquerda(double mult, int type = 0, int modf = 0) {
 
-async Task DireitaGrau(double mult = 1, double actCompass = 270, double grau = 90) {
-    while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass+grau), 360)) {
-        await Time.Delay(50);
-        IO.Print( Math.Round(Bot.Compass).ToString()+ "  " + Utils.Modulo(Math.Round(actCompass+grau), 360).ToString());
-        Direita(mult);
-   }
-}
+    Direcao("e", mult);
 
-async Task Esquerda90(double mult = 1, double actCompass = 270) {
-    actCompass -= 90;
-    while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass), 360)) {
-        await Time.Delay(50);
-        IO.Print( Math.Round(Bot.Compass).ToString()+ "  " +  Utils.Modulo(Math.Round(actCompass), 360).ToString());
-        Esquerda(mult);
-   }
-}
+    if(type == 1) { // Esquerda 90
+        double actCompass = Bot.Compass - 90 + modf;
 
-async Task EsquerdaGrau(double mult = 1, double actCompass = 270, double grau = 90) {
-    actCompass -= grau;
-    while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass), 360)) {
-        await Time.Delay(50);
-        IO.Print( Math.Round(Bot.Compass).ToString()+ "  " +  Utils.Modulo(Math.Round(actCompass), 360).ToString());
-        Esquerda(mult);
-   }
-}
-
-async Task Esquerda(double mult) {
-
-    Bot.GetComponent<Servomotor>("lmotor").Apply( -150*mult, -150*mult );
-    Bot.GetComponent<Servomotor>("rmotor").Apply( 170*mult, 170*mult  );
-    Bot.GetComponent<Servomotor>("blmotor").Apply( -150*mult, -150*mult );
-    Bot.GetComponent<Servomotor>("brmotor").Apply( 170*mult, 170*mult  );
+        while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass), 360)) {
+            await Time.Delay(50);
+            IO.Print( Math.Round(Bot.Compass).ToString()+ "  " +  Utils.Modulo(Math.Round(actCompass), 360).ToString());
+            Esquerda(mult);
+        }
+    }
 
 }
 
+bool VerificarUltra(string nome, double limite, bool menor = true) {
 
-async Task Main()
-{
+    if(menor) {
+        return ( Bot.GetComponent<UltrasonicSensor>( nome ).Analog ) < limite && ( Bot.GetComponent<UltrasonicSensor>( nome ).Analog ) > 0;
+    } else {
+        return ( Bot.GetComponent<UltrasonicSensor>( nome ).Analog ) > limite && ( Bot.GetComponent<UltrasonicSensor>( nome ).Analog ) != -1;
+    }
 
+}
+
+async Task Start() {
     Travar(motores, false);
     Frente(motores, 1);
-    await LevantarPa();
+    await DirecaoPa(3, 1);
+}
 
+async Task Stage1() {
     while(true) {
 
         await Time.Delay(50);
         Frente(motores, 1);
-        if( ( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).Brightness < 90 && ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).Brightness < 90) {
+        if( ( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).Brightness < 90 && (Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).Brightness < 90) {
+            await Time.Delay(200);
             break;
         }
     }
-    await AbaixarPa();
+}
 
+async Task Stage2() {
 
-    double anguloT = 0;
+    await DirecaoPa(1, -1);
+
 
     while(true) {
         await Time.Delay(50);
         Frente(motores, 2);
         if( ( Bot.GetComponent<ColorSensor>( "fs" ).Analog ).ToString() == "Preto") {
-            anguloT = Math.Round(Bot.Compass);
-            IO.Print(anguloT.ToString());
             await Time.Delay(2000);
             break;
         }
-        else if(( Bot.GetComponent<UltrasonicSensor>( "ffultra" ).Analog ) < 6 && ( Bot.GetComponent<UltrasonicSensor>( "ffultra" ).Analog ) > 0) {
-            
-            await Direita90(1.2, Bot.Compass);
+        else if(VerificarUltra("ffultra", 6)) {
+            await Direita(1.2, 1);
         }
         
     }
 
+}
+
+async Task Stage3() {
     while(true) {
         await Time.Delay(50);
         Tras(motores, 1);
-        if((( Bot.GetComponent<UltrasonicSensor>( "bultra" ).Analog ) < 1 && ( Bot.GetComponent<UltrasonicSensor>( "bultra" ).Analog ) > 0)) {
+        if(VerificarUltra("bultra", 1)) {
             Travar(motores);
         }
-        if(( Bot.GetComponent<UltrasonicSensor>( "rultra" ).Analog ) < 18 && ( Bot.GetComponent<UltrasonicSensor>( "rultra" ).Analog ) > 0) {
+        if(VerificarUltra("rultra", 18)) {
 
             Tras(motores, 1.5);
 
             await Time.Delay(1000);
-            await Direita90(1.2, Bot.Compass);
+            await Direita(1.2, 1);
 
-            while(( Bot.GetComponent<UltrasonicSensor>( "ffultra" ).Analog ) > 5  && ( Bot.GetComponent<UltrasonicSensor>( "ffultra" ).Analog ) != -1) {
+            while(VerificarUltra("ffultra", 5, false)) {
                 await Time.Delay(50);
                 Frente(motores, 2);
             }
@@ -182,23 +193,34 @@ async Task Main()
             await LevantarPa2(40, 0.1);
             await Time.Delay(4000);
 
-            while(!(( Bot.GetComponent<UltrasonicSensor>( "bultra" ).Analog ) < 1 && ( Bot.GetComponent<UltrasonicSensor>( "bultra" ).Analog ) > 0)) {
+            while(!(VerificarUltra("bultra", 1))) {
                 await Time.Delay(50);
                 Tras(motores, 1);
             }
-            await Esquerda90(1.2, Bot.Compass + 20);
-          
-            Travar(motores);
-            Travar(motores, false);
+            await Esquerda(1.2, 1, 20);
             
-            await AbaixarPa();
+            await DirecaoPa(1, -1);
             while( ( Bot.GetComponent<ColorSensor>( "fs" ).Analog ).ToString() != "Preto") {
                 await Time.Delay(50);
-                Frente(motores, 1);
+                Frente(motores, 2);
             }
             await Time.Delay(2000);
         }
 
     }
+}
+
+async Task Main()
+{
+
+    
+    await Start();
+    
+
+    await Stage1();
+
+    await Stage2();
+
+    await Stage3();
 
 }
