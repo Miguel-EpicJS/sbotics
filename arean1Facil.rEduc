@@ -1,0 +1,50 @@
+inicio
+TravarMotor("lmotor", falso)
+TravarMotor("rmotor", falso)
+TravarMotor("blmotor", falso)
+TravarMotor("brmotor", falso)
+
+
+enquanto (verdadeiro) farei {
+Esperar(50)
+
+Motor("lmotor", 180)
+Motor("rmotor", 180)
+Motor("blmotor", 180)
+Motor("brmotor", 180)
+
+
+
+enquanto ( Cor("lc") == "Verde" ou (Cor("lc") == "Preto" e Cor("rc") != "Preto")) farei {
+
+    Motor("lmotor", 500 - 1000)
+    Motor("rmotor", 500)
+    Motor("blmotor", 500 - 1000) 
+    Motor("brmotor", 500)
+
+    se( Cor("lc") == "Verde" ) entao {
+        Esperar(500)
+    }
+
+    Esperar(50)
+}
+
+
+enquanto (Cor("rc") == "Verde" ou (Cor("rc") == "Preto" e Cor("lc") != "Preto")) farei {
+
+
+    Motor("lmotor", 500)
+    Motor("rmotor", 500 - 1000)
+    Motor("blmotor", 500) 
+    Motor("brmotor", 500 - 1000)
+ 
+    se( Cor("rc") == "Verde" ) entao {
+        Esperar(500)
+    }
+
+    Esperar(50)
+}
+
+}
+
+fim
