@@ -1,184 +1,114 @@
-bool vrfVerdeLeft() 
+string lc1, rc1, lc2, rc2, cc;
+
+void UpdateColors()
 {
-    return ( ( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).Green ) > ( ( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).Red ) + 15 && ( ( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).Green ) > ( ( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).Blue ) + 15;
-}
-bool vrfVerdeRight() 
-{
-    return ( ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).Green ) > ( ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).Red ) + 15 && ( ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).Green ) > ( ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).Blue ) + 15;
-}
-
-async Task Obstaculo(double rvel, double vel) 
-{
-    Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( 2*rvel, 2*rvel );
-    Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-    Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( 2*rvel, 2*rvel );
-    Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-
-    await Time.Delay(1000);
-    
-    Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( 2*vel, 2*vel );
-    Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( 2*vel, 2*vel );
-    Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( 2*vel, 2*vel );
-    Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( 2*vel, 2*vel );
-
-    await Time.Delay(2300);
-
-    Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-    Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( 2*rvel, 2*rvel );
-    Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-    Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( 2*rvel, 2*rvel );
-
-    await Time.Delay(1000);
-
-    Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( 2*vel, 2*vel );
-    Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( 2*vel, 2*vel );
-    Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( 2*vel, 2*vel );
-    Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( 2*vel, 2*vel );
-
-    await Time.Delay(2300);
-
-    Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-    Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( 2*rvel, 2*rvel );
-    Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-    Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( 2*rvel, 2*rvel );
-
-    await Time.Delay(500);
-    
+    lc1 = ( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).ToString();        
+    rc1 = ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).ToString();
+    lc2 = ( Bot.GetComponent<ColorSensor>( "lc2" ).Analog ).ToString();        
+    rc2 = ( Bot.GetComponent<ColorSensor>( "rc2" ).Analog ).ToString();
+    cc = ( Bot.GetComponent<ColorSensor>( "cc" ).Analog ).ToString();
 }
 
-async Task LevantarPa(float mult = 1)
+bool IsGreen(string name)
 {
-    Bot.GetComponent<Servomotor>( "fmotor" ).Locked = false;
-    Bot.GetComponent<Servomotor>("fmotor").Apply( 45*mult, 45*mult );
-    await Time.Delay(1000);
-    Bot.GetComponent<Servomotor>( "fmotor" ).Locked = true;
+    return ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Green ) > ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Blue ) + 10 && ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Green ) > ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Red ) + 10;
+}
+
+void Locked(bool option)
+{
+    Bot.GetComponent<Servomotor>(  "lmotor"  ).Locked = option;
+    Bot.GetComponent<Servomotor>(  "rmotor"  ).Locked = option;
+    Bot.GetComponent<Servomotor>(  "blmotor"  ).Locked = option; 
+    Bot.GetComponent<Servomotor>(  "brmotor"  ).Locked = option;
+}
+
+void Movement(double speed)
+{
+    Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply(speed, speed);
+    Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply(speed, speed);
+    Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply(speed, speed); 
+    Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply(speed, speed);
+}
+
+async Task ControlMovement(double[] speed)
+{
+    Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply(speed[0], speed[0]);
+    Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply(speed[1], speed[1]);
+    Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply(speed[0], speed[0]); 
+    Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply(speed[1], speed[1]);
 }
 
 async Task Main()
 {
-    Bot.GetComponent<Servomotor>(  "lmotor"  ).Locked = false;
-    Bot.GetComponent<Servomotor>(  "rmotor"  ).Locked = false;
-    Bot.GetComponent<Servomotor>(  "blmotor"  ).Locked = false; 
-    Bot.GetComponent<Servomotor>(  "brmotor"  ).Locked = false;
+    Locked(false);
 
+    double speed = 100;
+    double rotation = 500;
 
-    double vel = 180;
-    int rvel = 500;
+    double[] arr = new double[2];
 
-    while(true) {
+    while(true)
+    {
+
         await Time.Delay(50);
-    
-        Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( vel, vel );
-        Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( vel, vel );
-        Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( vel, vel );
-        Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( vel, vel );
 
-        if(Bot.Speed < 1.3) {
-             vel += 5;
-        } 
-        if(Bot.Speed > 1.3) {
-             vel -= 5 * (Bot.Speed - 1.3) * 10;
-        }
-
-        string lc1 = "Branco";
-        string rc1 = "Branco";
-
-        if (( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).ToString() == "Preto")
+        if (Math.Round(Bot.Speed) < 1.4)
         {
-            Bot.GetComponent<Light>( "led" ).TurnOn( new Color(255, 255, 255) );
-            lc1 = "Preto";
-        } else {
-            Bot.GetComponent<Light>( "led" ).TurnOn( new Color(255, 0, 255) );
-            lc1 = "Branco";
-        }
-        if (( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).ToString() == "Preto")
+            speed += 5;
+        }        
+        else if (Math.Round(Bot.Speed) > 1.4)
         {
-            Bot.GetComponent<Light>( "led" ).TurnOn( new Color(255, 255, 255) );
-            rc1 = "Preto";
-        } else {
-            Bot.GetComponent<Light>( "led" ).TurnOn( new Color(255, 255, 0) );
-            rc1 = "Branco";
+            speed -= 5;
         }
 
-        if (( Bot.GetComponent<UltrasonicSensor>("ffultra").Analog ) < 5 && ( Bot.GetComponent<UltrasonicSensor>("ffultra").Analog ) > 0) {
-            await Obstaculo(rvel, vel);
-        }
+        Movement(speed);
 
-        while(vrfVerdeRight() && vrfVerdeLeft())
+        UpdateColors();
+
+        if (IsGreen("lc1"))
         {
-            await Time.Delay(50);
-            Bot.GetComponent<Light>( "led" ).TurnOn( new Color(70, 0, 0) );
-            Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( 2*rvel, 2*rvel );
-            Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-            Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( 2*rvel, 2*rvel );
-            Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
+            arr[0] = -rotation;
+            arr[1] = rotation;
+            await ControlMovement( arr );
+            await Time.Delay(1000);
 
-            await Time.Delay(2300);
-
-            Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( vel, vel );
-            Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( vel, vel );
-            Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( vel, vel );
-            Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( vel, vel );
-
+            Movement(speed);
             await Time.Delay(1000);
         }
 
-        while( rc1 == "Branco" && vrfVerdeRight() ) {
-            await Time.Delay(50);
-            Bot.GetComponent<Light>( "led" ).TurnOn( new Color(0, 0, 0) );
-            Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( 2*rvel, 2*rvel );
-            Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-            Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( 2*rvel, 2*rvel );
-            Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-
-            await Time.Delay(1200);
-
-            Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( vel, vel );
-            Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( vel, vel );
-            Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( vel, vel );
-            Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( vel, vel );
-
+        if (IsGreen("rc1"))
+        {
+            arr[0] = rotation;
+            arr[1] = -rotation;
+            ControlMovement( arr );
             await Time.Delay(1000);
 
-        }
-        while( rc1 == "Branco" && vrfVerdeLeft() ) {
-            await Time.Delay(50);
-            Bot.GetComponent<Light>( "led" ).TurnOn( new Color(255, 255, 255) );
-            Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-            Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( 2*rvel, 2*rvel );
-            Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( 2*rvel, 2*rvel - 4*rvel );
-            Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( 2*rvel, 2*rvel );
-
-            await Time.Delay(1200);
-
-            Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( vel, vel );
-            Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( vel, vel );
-            Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( vel, vel );
-            Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( vel, vel );
-
+            Movement(speed);
             await Time.Delay(1000);
-
         }
 
-        while( ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).ToString() == "Preto" && ( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).ToString() != "Preto" && ( Bot.GetComponent<ColorSensor>( "cc" ).Analog ).ToString() != "Preto") {
+        while ( ( (lc1 == "Preto" || lc2 == "Preto") && rc1 == "Branco" && rc1 == cc ) )
+        {
             await Time.Delay(50);
-            Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( rvel, rvel );
-            Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( rvel, rvel - 2*rvel );
-            Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( rvel, rvel );
-            Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( rvel, rvel - 2*rvel );
-        }
-        while( ( Bot.GetComponent<ColorSensor>( "lc1" ).Analog ).ToString() == "Preto" && ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).ToString() != "Preto" && ( Bot.GetComponent<ColorSensor>( "cc" ).Analog ).ToString() != "Preto") {
-            await Time.Delay(50);
-            Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply( rvel, rvel - 2*rvel );
-            Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply( rvel, rvel );
-            Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply( rvel, rvel - 2*rvel );
-            Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply( rvel, rvel );
-
-        }
-
         
-        
+            UpdateColors();
+            
+            arr[0] = -rotation;
+            arr[1] = rotation;
+            await ControlMovement( arr );
+        }
+
+        while ( ( (rc1 == "Preto" || rc2 == "Preto") && lc1 == "Branco" && lc1 == cc ) )
+        {
+            await Time.Delay(50);
+
+            UpdateColors();
+            
+            arr[0] = rotation;
+            arr[1] = -rotation;
+            await ControlMovement( arr );
+        }
+
     }
-
 
 }
