@@ -1,3 +1,31 @@
+async Task Right(double speed, double angle) {
+
+    double actCompass = Bot.Compass;
+    while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass+angle), 360)) {
+        await Time.Delay(50);
+        IO.Print( Math.Round(Bot.Compass).ToString()+ "  " + Utils.Modulo(Math.Round(actCompass+angle), 360).ToString());
+        Bot.GetComponent<Servomotor>("lmotor").Apply( speed, speed );
+        Bot.GetComponent<Servomotor>("rmotor").Apply( -speed, -speed );
+        Bot.GetComponent<Servomotor>("blmotor").Apply( speed, speed );
+        Bot.GetComponent<Servomotor>("brmotor").Apply( -speed, -speed );
+    }
+
+}
+
+async Task Left(double speed, double angle) {
+
+    double actCompass = Bot.Compass;
+    while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass-angle), 360)) {
+        await Time.Delay(50);
+        IO.Print( Math.Round(Bot.Compass).ToString()+ "  " + Utils.Modulo(Math.Round(actCompass-angle), 360).ToString());
+        Bot.GetComponent<Servomotor>("lmotor").Apply( -speed, -speed );
+        Bot.GetComponent<Servomotor>("rmotor").Apply( speed, speed );
+        Bot.GetComponent<Servomotor>("blmotor").Apply( -speed, -speed );
+        Bot.GetComponent<Servomotor>("brmotor").Apply( speed, speed );
+    }
+
+}
+
 string lc1, rc1, lc2, rc2, cc;
 string blc1, brc1, blc2, brc2, bcc;
 
@@ -81,11 +109,11 @@ async Task Main()
 
         UpdateColors();
 
-        if (Bot.Speed < 1.4)
+        if (Bot.Speed < 1.3)
         {
             speed += 5;
         }        
-        else if (Bot.Speed > 1.4)
+        else if (Bot.Speed > 1.3)
         {
             speed -= 5;
         }
@@ -96,68 +124,57 @@ async Task Main()
 
         if (IsGreen("lc1") && IsGreen("rc1"))
         {
-            arr[0] = -rotation;
-            arr[1] = rotation;
-            await ControlMovement( arr );
-            await Time.Delay(2500);
+            await Time.Delay(1000);
+            await Right(speed, 180);
+
 
             Movement(speed);
             await Time.Delay(1000); 
         }
 
         if (IsGreen("lc1") && blc1 != "Preto")
-        {
-            arr[0] = -rotation;
-            arr[1] = rotation;
-            await ControlMovement( arr );
+        { 
             await Time.Delay(1000);
+            await Left(speed, 90);
+
 
             Movement(speed);
-            await Time.Delay(2000);
+            await Time.Delay(1000); 
         }
 
         if (IsGreen("rc1") && brc1 != "Preto")
         {
-            arr[0] = rotation;
-            arr[1] = -rotation;
-            ControlMovement( arr );
             await Time.Delay(1000);
+            await Right(speed, 90);
+
 
             Movement(speed);
-            await Time.Delay(2000);
+            await Time.Delay(1000); 
         }
 
         if (IsObstacle())
         {
-            arr[0] = rotation;
-            arr[1] = -rotation;
-            ControlMovement( arr );
-            await Time.Delay(800);
-
-            while (Math.Round(Bot.Speed) < 1.4)
+            await Right(speed, 45);
+            Movement(speed);
+            while(( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog ) == -1 || !(( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog ) < 5))
             {
-                await Time.Delay(10);
-                speed += 5;
+                IO.Print($"1 - {( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog )}");
+                await Time.Delay(50);
+            }
+            while(( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog ) < 5)
+            {
+                IO.Print($"1 - {( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog )}");
+                await Time.Delay(50);
             }
 
+            await Left(speed, 90);
             Movement(speed);
-            await Time.Delay(4000);
 
-            arr[0] = -rotation;
-            arr[1] = rotation;
-            ControlMovement( arr );
-            await Time.Delay(700);
-
-            Movement(speed);
-            await Time.Delay(3000);
-
-            arr[0] = -rotation;
-            arr[1] = rotation;
-            ControlMovement( arr );
-            await Time.Delay(700);
-
-            Movement(speed);
-            await Time.Delay(5000);
+            while(rc1 != "Preto")
+            {
+                await Time.Delay(50);
+                UpdateColors();
+            }
         }
 
         while ( ( (lc1 == "Preto" || lc2 == "Preto") && rc1 == "Branco" && rc1 == cc ) )
