@@ -1,33 +1,7 @@
-async Task Right(double speed, double angle) {
-
-    double actCompass = Bot.Compass;
-    while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass+angle), 360)) {
-        await Time.Delay(50);
-        IO.Print( Math.Round(Bot.Compass).ToString()+ "  " + Utils.Modulo(Math.Round(actCompass+angle), 360).ToString());
-        Bot.GetComponent<Servomotor>("lmotor").Apply( speed, speed );
-        Bot.GetComponent<Servomotor>("rmotor").Apply( -speed, -speed );
-        Bot.GetComponent<Servomotor>("blmotor").Apply( speed, speed );
-        Bot.GetComponent<Servomotor>("brmotor").Apply( -speed, -speed );
-    }
-
-}
-
-async Task Left(double speed, double angle) {
-
-    double actCompass = Bot.Compass;
-    while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass-angle), 360)) {
-        await Time.Delay(50);
-        IO.Print( Math.Round(Bot.Compass).ToString()+ "  " + Utils.Modulo(Math.Round(actCompass-angle), 360).ToString());
-        Bot.GetComponent<Servomotor>("lmotor").Apply( -speed, -speed );
-        Bot.GetComponent<Servomotor>("rmotor").Apply( speed, speed );
-        Bot.GetComponent<Servomotor>("blmotor").Apply( -speed, -speed );
-        Bot.GetComponent<Servomotor>("brmotor").Apply( speed, speed );
-    }
-
-}
-
 string lc1, rc1, lc2, rc2, cc;
 string blc1, brc1, blc2, brc2, bcc;
+
+string[] motors = {"lmotor", "rmotor", "blmotor", "brmotor"};
 
 void UpdateColors()
 {
@@ -35,7 +9,7 @@ void UpdateColors()
     rc1 = ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).ToString();
     lc2 = ( Bot.GetComponent<ColorSensor>( "lc2" ).Analog ).ToString();        
     rc2 = ( Bot.GetComponent<ColorSensor>( "rc2" ).Analog ).ToString();
-    cc = ( Bot.GetComponent<ColorSensor>( "cc" ).Analog ).ToString();
+    cc  = ( Bot.GetComponent<ColorSensor>( "cc" ).Analog ).ToString();
 }
 
 void UpdateBeforeColors()
@@ -44,7 +18,7 @@ void UpdateBeforeColors()
     brc1 = ( Bot.GetComponent<ColorSensor>( "rc1" ).Analog ).ToString();
     blc2 = ( Bot.GetComponent<ColorSensor>( "lc2" ).Analog ).ToString();        
     brc2 = ( Bot.GetComponent<ColorSensor>( "rc2" ).Analog ).ToString();
-    bcc = ( Bot.GetComponent<ColorSensor>( "cc" ).Analog ).ToString();
+    bcc  = ( Bot.GetComponent<ColorSensor>( "cc" ).Analog ).ToString();
 }
 
 bool IsObstacle()
@@ -52,34 +26,103 @@ bool IsObstacle()
     return ( Bot.GetComponent<UltrasonicSensor>( "ffultra" ).Analog ) > 0 && ( Bot.GetComponent<UltrasonicSensor>( "ffultra" ).Analog ) < 5;
 }
 
+bool IsGreenForBlue(string name)
+{
+    return ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Green ) > ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Blue ) + 10;
+}
+bool IsGreenForRed(string name)
+{
+    return ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Green ) > ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Red ) + 10;
+}
+
 bool IsGreen(string name)
 {
-    return ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Green ) > ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Blue ) + 10 && ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Green ) > ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Red ) + 10;
+    return IsGreenForBlue(name) && IsGreenForRed(name);
 }
 
 void Locked(bool option)
 {
-    Bot.GetComponent<Servomotor>(  "lmotor"  ).Locked = option;
-    Bot.GetComponent<Servomotor>(  "rmotor"  ).Locked = option;
-    Bot.GetComponent<Servomotor>(  "blmotor"  ).Locked = option; 
-    Bot.GetComponent<Servomotor>(  "brmotor"  ).Locked = option;
-
+    foreach(string motor in motors)
+    {
+        Bot.GetComponent<Servomotor>(motor).Locked = option;
+    }
 }
 
 void Movement(double speed)
 {
-    Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply(speed, speed);
-    Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply(speed, speed);
-    Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply(speed, speed); 
-    Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply(speed, speed);
+    foreach(string motor in motors)
+    {
+        Bot.GetComponent<Servomotor>(motor).Apply(speed, speed);
+    }
 }
 
-async Task ControlMovement(double[] speed)
+bool VerifyObstacleDistance()
 {
-    Bot.GetComponent<Servomotor>(  "lmotor"  ).Apply(speed[0], speed[0]);
-    Bot.GetComponent<Servomotor>(  "rmotor"  ).Apply(speed[1], speed[1]);
-    Bot.GetComponent<Servomotor>(  "blmotor"  ).Apply(speed[0], speed[0]); 
-    Bot.GetComponent<Servomotor>(  "brmotor"  ).Apply(speed[1], speed[1]);
+    return ( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog ) == -1 || !(( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog ) < 5);
+}
+
+bool VerifyObstacleExitDistance()
+{
+    return ( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog ) < 5;
+}
+
+bool VerifyTurnLeft()
+{
+    return ( (lc1 == "Preto" || lc2 == "Preto") && rc1 == "Branco" && rc1 == cc );
+}
+
+bool VerifyTurnRight()
+{
+    return ( (rc1 == "Preto" || rc2 == "Preto") && lc1 == "Branco" && lc1 == cc );
+}
+
+double ChangeSpeed(double speed)
+{
+    if (Bot.Speed < 1.3)
+    {
+        return 5;
+    }        
+    else if (Bot.Speed > 1.3)
+    {
+        return -5;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+async Task Right(double speed, double angle) {
+    double actCompass = Bot.Compass;
+    while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass+angle), 360)) {
+        await Time.Delay(50);
+        foreach(string motor in motors )
+        {
+            Bot.GetComponent<Servomotor>(motor).Apply( speed, speed );
+            speed = -speed;
+        }
+    }
+}
+
+async Task Left(double speed, double angle) {
+    double actCompass = Bot.Compass;
+    while(Math.Round(Bot.Compass) != Utils.Modulo(Math.Round(actCompass+angle), 360)) {
+        await Time.Delay(50);
+        foreach(string motor in motors )
+        {
+            speed = -speed;
+            Bot.GetComponent<Servomotor>(motor).Apply( speed, speed );
+        }
+    }
+}
+
+async Task ControlNegativeMovement(double speed)
+{
+    foreach(string motor in motors)
+    {
+        Bot.GetComponent<Servomotor>( motor ).Apply(speed, speed);
+        speed = -speed;
+    }
 }
 
 async Task Escavator()
@@ -109,18 +152,9 @@ async Task Main()
 
         UpdateColors();
 
-        if (Bot.Speed < 1.3)
-        {
-            speed += 5;
-        }        
-        else if (Bot.Speed > 1.3)
-        {
-            speed -= 5;
-        }
+        speed += ChangeSpeed(speed);
 
         Movement(speed);
-
-        
 
         if (IsGreen("lc1") && IsGreen("rc1"))
         {
@@ -156,14 +190,12 @@ async Task Main()
         {
             await Right(speed, 45);
             Movement(speed);
-            while(( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog ) == -1 || !(( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog ) < 5))
+            while(VerifyObstacleDistance())
             {
-                IO.Print($"1 - {( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog )}");
                 await Time.Delay(50);
             }
-            while(( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog ) < 5)
+            while(VerifyObstacleExitDistance())
             {
-                IO.Print($"1 - {( Bot.GetComponent<UltrasonicSensor>( "lbultra" ).Analog )}");
                 await Time.Delay(50);
             }
 
@@ -177,26 +209,22 @@ async Task Main()
             }
         }
 
-        while ( ( (lc1 == "Preto" || lc2 == "Preto") && rc1 == "Branco" && rc1 == cc ) )
+        while ( VerifyTurnLeft() )
         {
             await Time.Delay(50);
         
             UpdateColors();
             
-            arr[0] = -rotation;
-            arr[1] = rotation;
-            await ControlMovement( arr );
+            await ControlNegativeMovement( -rotation );       
         }
 
-        while ( ( (rc1 == "Preto" || rc2 == "Preto") && lc1 == "Branco" && lc1 == cc ) )
+        while ( VerifyTurnRight() )
         {
             await Time.Delay(50);
 
             UpdateColors();
             
-            arr[0] = rotation;
-            arr[1] = -rotation;
-            await ControlMovement( arr );
+            await ControlNegativeMovement( rotation );      
         }
 
         UpdateBeforeColors();
