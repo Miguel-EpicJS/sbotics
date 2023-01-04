@@ -1,0 +1,55 @@
+string[] motors = {"lmotor", "rmotor", "blmotor", "brmotor"};
+
+
+void Locked(bool option)
+{
+    foreach(string motor in motors)
+    {
+        Bot.GetComponent<Servomotor>(motor).Locked = option;
+    }
+}
+
+void Up(double speed)
+{
+    foreach(string motor in motors)
+    {
+        Bot.GetComponent<Servomotor>(motor).Apply(speed, speed);
+    }
+}
+
+void Down(double speed)
+{
+    speed = -speed;
+    foreach(string motor in motors)
+    {
+        Bot.GetComponent<Servomotor>(motor).Apply(speed, speed);
+    }
+}
+
+void Right(double speed)
+{
+    foreach(string motor in motors)
+    {
+        Bot.GetComponent<Servomotor>(motor).Apply(speed, speed);
+        speed = -speed;
+    }
+}
+
+void Left(double speed)
+{
+    foreach(string motor in motors)
+    {
+        speed = -speed;
+        Bot.GetComponent<Servomotor>(motor).Apply(speed, speed);
+    }
+}
+
+
+
+async Task Main()
+{
+    Locked(false);
+
+    Up(500);
+
+}
