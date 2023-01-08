@@ -125,12 +125,17 @@ bool VerifySensorColorExit(string name)
     double green = ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Green );
     double blue = ( ( Bot.GetComponent<ColorSensor>( name ).Analog ).Blue );
 
-    return Between(red, 50, 100) && Between(green, 50, 100) && Between(blue, 50, 100);
+    return Between(red, 50, 130) && Between(green, 50, 130) && Between(blue, 50, 130);
 }
 
 bool IsExit()
 {
     return VerifySensorColorExit("rc1") && VerifySensorColorExit("lc1");
+}
+
+bool IsFlat(double inclination)
+{
+    return inclination > 355 || inclination < 10;
 }
 
 async Task DragonFire()
@@ -166,8 +171,8 @@ async Task Main()
     Locked(false);
 
     double speed = 200;
-    double rspeed = 70;
-    double maxSpeed = 5;
+    double rspeed = 150;
+    double maxSpeed = 3;
 
     //WaveFormats wave = WaveFormats.Noise;
     //Bot.GetComponent<Buzzer>("buzzer").PlaySound( 1, wave );
@@ -175,7 +180,10 @@ async Task Main()
     while(true)
     {
         await Time.Delay(50);
-        IO.Print($"{( Bot.Inclination )} --- {Bot.Speed}");
+
+        IsFlat((Bot.Inclination));
+
+        IO.Print($"{( Bot.Inclination )} --- {Bot.Speed} -- {IsFlat(Bot.Inclination)}");
         Up(speed);
 
         if(IsExit())
@@ -192,7 +200,7 @@ async Task Main()
             speed -= 5;
         }
 
-        if (IsObstacle() && !Between(Bot.Compass, 300, 350))
+        if (IsObstacle() && IsFlat(Bot.Inclination))
         {
             IO.PrintLine($"{ ( Bot.GetComponent<UltrasonicSensor>( "lultra" ).Analog ) }");
             await TurnAngle(rspeed, 45);
@@ -249,13 +257,13 @@ async Task Main()
             await Time.Delay(1000); 
         }
 
-        while(getSensorColor("cc") != "Preto" && getSensorColor("rc1") == "Preto"  && !Between(Bot.Compass, 300, 350) )
+        while(getSensorColor("cc") != "Preto" && getSensorColor("rc1") == "Preto" && IsFlat(Bot.Inclination))
         {
             await Time.Delay(50);
             Right(rspeed);
         }
 
-        while(getSensorColor("cc") != "Preto" && getSensorColor("lc1") == "Preto"  && !Between(Bot.Compass, 300, 350) )
+        while(getSensorColor("cc") != "Preto" && getSensorColor("lc1") == "Preto" && IsFlat(Bot.Inclination))
         {
             await Time.Delay(50);
             Left(rspeed);
@@ -264,18 +272,58 @@ async Task Main()
         //await DragonFire();
     }
     speed = 200;
+
+
     IO.Print("2° stage");
     while(true) {
     
 
         await Time.Delay(50);
         Up(speed);
-        if( ( Bot.GetComponent<ColorSensor>( "cc" ).Analog ).ToString() == "Preto") {
-            await Time.Delay(2000);
+        if( ( Bot.GetComponent<ColorSensor>( "fs" ).Analog ).ToString() == "Preto") {
+            await Time.Delay(5000);
             break;
         }
-        else if(VerifyUltra("ffultra", 6)) {
-            await TurnAngle(speed, 45);
+        else if(VerifyUltra("ffultra", 5)) {
+            for (int i = 0; i < 9; i++)
+            {
+                await Time.Delay(50);
+                await TurnAngle(rspeed, 10);
+
+                Up(rspeed);
+                await Time.Delay(200);
+            }
+            
+        }
+        
+    }
+
+    IO.Print("3° stage");
+
+    while(true) {
+    
+
+        await Time.Delay(50);
+        Down(speed);
+        if(VerifyUltra("rmultra", 18)) {
+
+            Down(speed);
+
+            await Time.Delay(600);
+            await TurnAngle(rspeed, 90);
+
+            while(VerifyUltra("ffultra", 4, false)) {
+                await Time.Delay(50);
+                Up(speed / 2);
+            }
+            for (int i = 0; i < 18; i++)
+            {
+                await Time.Delay(50);
+                await TurnAngle(rspeed, 10);
+
+                Up(rspeed);
+                await Time.Delay(200);
+            }
         }
         
     }
