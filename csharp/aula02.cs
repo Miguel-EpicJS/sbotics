@@ -61,7 +61,7 @@ async Task Main()
 {
     Unlock();
     int vel = 180;
-    int rvel = 200;
+    int rvel = 300;
 
     bool rc1 = false;
     bool lc1 = false;
@@ -73,13 +73,34 @@ async Task Main()
 
         if (GetUltraSensor("ffultra") < 5 && GetUltraSensor("ffultra") != -1)
         {
-            AlignItself(rvel / 2);
+            Up(vel);
+            await Time.Delay(1000);
+
+            if (GetUltraSensor("ffultra") < 5 && GetUltraSensor("ffultra") != -1)
+            {
+                Up(-vel);
+                await Time.Delay(1000);
+                Right(rvel);
+                while (GetColorSensor("lc2") != "Preto")
+                {
+                    await Time.Delay(50);
+                }
+                Up(vel);
+                while ((GetUltraSensor("lc2")) < 3 )
+                {
+                    await Time.Delay(50);
+                }
+                Up(vel);
+                await Time.Delay(1000);
+                Right(rvel);
+                await Time.Delay(3000);
+            }
         }
 
         if (DetectGreen("rc1") && rc1 && DetectGreen("lc1") && lc1)
         {
             Up(-vel);
-            await Time.Delay(1000);
+            await Time.Delay(500);
             Right(rvel);
             await Time.Delay(1000);
 
@@ -87,17 +108,17 @@ async Task Main()
 
         }
 
-        if (DetectGreen("rc1") && rc1)
+        if (( DetectGreen("rc1") || DetectGreen("rc2") ) && rc1)
         {
-            Right(rvel);
+            Right(rvel*2);
             await Time.Delay(50);
 
             await AlignItself(rvel);
         }
 
-        if (DetectGreen("lc1") && lc1)
+        if (( DetectGreen("lc1") || DetectGreen("lc2") ) && lc1)
         {
-            Left(rvel);
+            Left(rvel*2);
             await Time.Delay(50);
 
             await AlignItself(rvel);
